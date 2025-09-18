@@ -16,14 +16,14 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building Docker images...'
-                sh 'docker-compose build'
+                sh '/usr/bin/docker-compose build'
             }
         }
 
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying to Test environment...'
-                sh 'docker-compose up -d --remove-orphans'
+                sh '/usr/bin/docker-compose up -d --remove-orphans'
             }
         }
 
@@ -37,7 +37,7 @@ pipeline {
         stage('Tear Down Test Environment') {
             steps {
                 echo 'Tearing down Test environment...'
-                sh 'docker-compose down'
+                sh '/usr/bin/docker-compose down'
             }
         }
     }
