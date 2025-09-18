@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Espace Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <h2>Mon Espace Client</h2>
+            <form id="login-form">
+                <label for="email">E-mail de connexion</label>
+                <input type="email" id="email" placeholder="Ex: nom.prenom@exemple.com" required>
+
+                <label for="password">Mot de passe</label>
+                <div class="password-container">
+                    <input type="password" id="password" placeholder="Votre mot de passe" required>
+                    <span class="password-toggle">
+                        <img src="https://i.ibb.co/L50Hj3d/eye-icon.png" alt="Afficher le mot de passe" width="20" height="20">
+                    </span>
+                </div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="stay-logged-in">
+                    <label for="stay-logged-in">Rester connecté</label>
+                </div>
+                
+                <button type="submit">Me connecter</button>
+            </form>
+
+            <a href="#" class="forgot-password">Je ne parviens pas à me connecter</a>
+        </div>
+        
+        <div class="divider"></div>
+
+        <div class="create-account-container">
+            <h3>Vous n'avez pas encore d'Espace Client ?</h3>
+            <a href="#" class="create-account-button">Créer mon Espace Client</a>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
