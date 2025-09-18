@@ -9,7 +9,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 echo 'Checking out code from Git...'
-                git branch: 'main', url: 'https://github.com/votre-utilisateur/mon-projet-devops.git'
+                git branch: 'main', url: 'https://github.com/kevinneves/projet-devops.git'
             }
         }
 
