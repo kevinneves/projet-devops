@@ -1,43 +1,34 @@
 pipeline {
-    agent any
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
+    agent {
+        docker {
+            image 'docker/compose:1.29.2'
+            args "-v /var/run/docker.sock:/var/run/docker.sock"
+        }
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                echo 'Checking out code from Git...'
-                git branch: 'main', url: 'https://github.com/kevinneves/projet-devops.git'
-            }
-        }
-
         stage('Build') {
             steps {
                 echo 'Building Docker images...'
-                sh '/usr/bin/docker-compose build'
+                sh 'docker-compose build'
             }
         }
-
         stage('Deploy to Test') {
             steps {
                 echo 'Deploying to Test environment...'
-                sh '/usr/bin/docker-compose up -d --remove-orphans'
+                sh 'docker-compose up -d --remove-orphans'
             }
         }
-
         stage('Run Automated Tests') {
             steps {
                 echo 'Running automated tests...'
                 sh 'curl -f http://localhost:3000 || exit 1'
             }
         }
-
         stage('Tear Down Test Environment') {
             steps {
                 echo 'Tearing down Test environment...'
-                sh '/usr/bin/docker-compose down'
+                sh 'docker-compose down'
             }
         }
     }
