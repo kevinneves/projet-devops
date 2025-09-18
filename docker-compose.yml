@@ -1,0 +1,21 @@
+services:
+  # Service de l'application web
+  app:
+    # Build à partir du Dockerfile dans le répertoire courant
+    build: .
+    # Mappe le port 3000 du conteneur vers le port 3000 de la machine hôte
+    ports:
+      - "3000:3000"
+    # Les dépendances de l'application
+    depends_on:
+      - db
+
+  # Service de la base de données
+  db:
+    # Utilise une image PostgreSQL officielle
+    image: postgres:14-alpine
+    # Définition des variables d'environnement pour la base de données
+    environment:
+      POSTGRES_DB: devops_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
