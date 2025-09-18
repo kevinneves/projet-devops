@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Client } = require('pg'); // Importe le client PostgreSQL
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
@@ -12,16 +12,25 @@ app.use(express.json());
 // Servir les fichiers statiques du front-end
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuration de la base de données SQLite
-// On change le schéma pour stocker les e-mails
-const db = new sqlite3.Database(':memory:', (err) => {
-    if (err) {
-        return console.error(err.message);
-    }
-    console.log('Connecté à la base de données en mémoire.');
-    // La table s'appelle maintenant "users" et a les colonnes "email" et "password"
-    db.run('CREATE TABLE users(email TEXT, password TEXT)');
+// Configuration de la connexion à la base de données PostgreSQL
+const client = new Client({
+    user: 'user', // Correspond à POSTGRES_USER dans docker-compose.yml
+    host: 'db', // Le nom du service Docker pour la base de données
+    database: 'devops_db', // Correspond à POSTGRES_DB dans docker-compose.yml
+    password: 'password', // Correspond à POSTGRES_PASSWORD dans docker-compose.yml
+    port: 5432, // Le port par défaut de PostgreSQL
 });
+
+// Connexion à la base de données et création de la table si elle n'existe pas
+client.connect()
+    .then(() => {
+        console.log('Connecté à la base de données PostgreSQL.');
+        return client.query('CREATE TABLE IF NOT EXISTS users (email VARCHAR(255) PRIMARY KEY, password VARCHAR(255));');
+    })
+    .then(() => {
+        console.log('Table "users" créée ou déjà existante.');
+    })
+    .catch(err => console.error('Erreur de connexion à la base de données', err.stack));
 
 // Route d'inscription
 app.post('/api/register', async (req, res) => {
@@ -30,35 +39,37 @@ app.post('/api/register', async (req, res) => {
         return res.status(400).send('Email et mot de passe requis.');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const stmt = db.prepare('INSERT INTO users VALUES (?, ?)');
-    stmt.run(email, hashedPassword, function(err) {
-        if (err) {
-            return res.status(500).send('Erreur lors de l\'enregistrement.');
-        }
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await client.query('INSERT INTO users(email, password) VALUES($1, $2)', [email, hashedPassword]);
         res.status(201).send('Utilisateur enregistré avec succès !');
-    });
-    stmt.finalize();
+    } catch (err) {
+        console.error(err.stack);
+        res.status(500).send('Erreur lors de l\'enregistrement.');
+    }
 });
 
 // Route de connexion
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
-    // On recherche l'utilisateur par son e-mail
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, row) => {
-        if (err) {
-            return res.status(500).send('Erreur serveur.');
-        }
-        if (!row) {
-            return res.status(401).send('Email ou mot de passe incorrect.');
-        }
-        const match = await bcrypt.compare(password, row.password);
-        if (match) {
-            res.status(200).send('Connexion réussie !');
-        } else {
-            res.status(401).send('Email ou mot de passe incorrect.');
-        }
-    });
+
+    client.query('SELECT * FROM users WHERE email = $1', [email])
+        .then(async result => {
+            const user = result.rows[0];
+            if (!user) {
+                return res.status(401).send('Email ou mot de passe incorrect.');
+            }
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                res.status(200).send('Connexion réussie !');
+            } else {
+                res.status(401).send('Email ou mot de passe incorrect.');
+            }
+        })
+        .catch(err => {
+            console.error(err.stack);
+            res.status(500).send('Erreur serveur.');
+        });
 });
 
 // Lancer le serveur
